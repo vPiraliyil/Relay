@@ -1,0 +1,11 @@
+{
+  "name": "relay",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "packages/producer",
+    "packages/worker",
+    "packages/reaper",
+    "packages/dashboard"
+  ]
+}

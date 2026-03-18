@@ -1,0 +1,95 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  producer:
+    build:
+      context: .
+      dockerfile: packages/producer/Dockerfile
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+    volumes:
+      - uploads:/app/uploads
+      - outputs:/app/outputs
+
+  worker-1:
+    build:
+      context: .
+      dockerfile: packages/worker/Dockerfile
+    env_file: .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - WORKER_ID=worker-1
+    depends_on:
+      - redis
+    volumes:
+      - uploads:/app/uploads
+      - outputs:/app/outputs
+
+  worker-2:
+    build:
+      context: .
+      dockerfile: packages/worker/Dockerfile
+    env_file: .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - WORKER_ID=worker-2
+    depends_on:
+      - redis
+    volumes:
+      - uploads:/app/uploads
+      - outputs:/app/outputs
+
+  worker-3:
+    build:
+      context: .
+      dockerfile: packages/worker/Dockerfile
+    env_file: .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - WORKER_ID=worker-3
+    depends_on:
+      - redis
+    volumes:
+      - uploads:/app/uploads
+      - outputs:/app/outputs
+
+  reaper:
+    build:
+      context: .
+      dockerfile: packages/reaper/Dockerfile
+    env_file: .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: packages/dashboard/Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:3000
+    depends_on:
+      - producer
+
+volumes:
+  redis-data:
+  uploads:
+  outputs:
