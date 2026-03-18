@@ -1,2 +1,2 @@
 # Relay
-A production-inspired distributed job queue system built without queue libraries. Processes image uploads across parallel workers with fault tolerance, retry logic, and a live admin dashboard
+Redis-backed distributed job queue built from scratch in TypeScript. Features atomic job locking, crash recovery, retry logic with exponential backoff, and a dead-letter queue — no BullMQ or queue libraries used.
