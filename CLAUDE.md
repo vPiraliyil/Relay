@@ -42,6 +42,7 @@ queue:active       ZSET    jobId → lock expiry timestamp (score)
 queue:dlq          LIST    jobIds that exhausted retries
 job:<id>:logs      LIST    per-attempt log strings
 lock:job:<id>      STRING  workerId — SET NX PX <ttl>, auto-expires
+job:<id>:step      STRING  current step name — written by the worker as it progresses
 ```
 
 All Redis key strings must be defined as constants in a `keys.ts` file per package.
@@ -99,6 +100,7 @@ Comments that must always be present:
   that guarantee is necessary
 - Above the ZADD to queue:active — explain the role of the score and how the
   reaper uses it
+- Above each SET to job:<id>:step — explain what this enables for the dashboard
 
 ---
 
@@ -118,6 +120,47 @@ Commit messages describe what changed and why, not just what.
 
 Good:  `feat: add exponential backoff to retry logic to prevent thundering herd`
 Bad:   `feat: update worker.ts`
+
+---
+
+## Branching strategy
+
+All branches off `main` via `dev`. Feature branches merge into `dev`; `dev` merges
+into `main` at phase completion.
+
+### Naming conventions
+
+| Prefix | Purpose |
+|---|---|
+| `feat/` | Feature implementation (tests included) |
+| `docs/` | Documentation only |
+| `chore/` | Config, tooling, setup |
+| `fix/` | Bug fixes |
+
+All branch names: lowercase kebab-case.
+
+### Branch list
+
+#### Setup
+- `chore/redis-setup` — Docker Compose, Redis config, ioredis connection, `keys.ts`
+
+#### Phase 1
+- `feat/producer` — Express server, `POST /upload`, job record creation, enqueue to `queue:pending`; includes producer tests
+- `feat/worker` — polling loop, lock acquisition, Sharp handlers, job state updates; includes worker tests
+
+#### Phase 2
+- `feat/reaper` — lock expiry scan, attempt increment, requeue vs DLQ logic, exponential backoff; includes reaper tests
+
+#### Phase 3
+- `feat/admin-api` — queue stats endpoint, job list endpoint, DLQ endpoint, manual retry endpoint; includes API tests
+- `feat/dashboard` — React app, stats panel, job table, DLQ panel, polling
+- `docs/create-readme` — architecture diagram, setup instructions, design decisions
+- `docs/api-docs` — endpoint documentation with request/response examples
+
+#### Phase 4 — Job Tracking (Observability)
+- `feat/job-tracking` — backend tracking logic: record which step each job is currently in, persist step state to Redis, expose via API; includes tests
+- `feat/job-tracking-ui` — dashboard UI element showing which step the job is in (pending → resize_thumbnail → resize_medium → strip_exif → convert_webp → completed)
+- `docs/job-tracking` — document the tracking data model and any new API endpoints
 
 ---
 
@@ -171,5 +214,7 @@ Two workers running simultaneously never process the same job.
 The README is complete enough that someone with no context can run the
 system with a single command and understand every design decision.
 
-**Phase 4** — At least one stretch goal implemented, documented, and
-explainable without referring to the code.
+**Phase 4** — Each job records its current step in Redis as it progresses
+through the pipeline. A new API endpoint exposes per-job step state. The
+dashboard shows the user which step their job is currently in. Implemented,
+tested, and explainable without referring to the code.
