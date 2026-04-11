@@ -5,6 +5,13 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    # Healthcheck lets dependent services wait until Redis is actually accepting
+    # connections, not just until the container process has started.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   producer:
     build:
@@ -17,7 +24,8 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     volumes:
       - uploads:/app/uploads
       - outputs:/app/outputs
@@ -32,7 +40,8 @@ services:
       - REDIS_PORT=6379
       - WORKER_ID=worker-1
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     volumes:
       - uploads:/app/uploads
       - outputs:/app/outputs
@@ -47,7 +56,8 @@ services:
       - REDIS_PORT=6379
       - WORKER_ID=worker-2
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     volumes:
       - uploads:/app/uploads
       - outputs:/app/outputs
@@ -62,7 +72,8 @@ services:
       - REDIS_PORT=6379
       - WORKER_ID=worker-3
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     volumes:
       - uploads:/app/uploads
       - outputs:/app/outputs
@@ -76,7 +87,8 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
 
   dashboard:
     build:
