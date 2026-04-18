@@ -4,6 +4,7 @@
 export const KEYS = {
   job: (id: string) => `job:${id}` as const,
   jobLogs: (id: string) => `job:${id}:logs` as const,
+  jobStep: (id: string) => `job:${id}:step` as const,
   lock: (id: string) => `lock:job:${id}` as const,
   QUEUE_PENDING: 'queue:pending',
   QUEUE_ACTIVE: 'queue:active',
